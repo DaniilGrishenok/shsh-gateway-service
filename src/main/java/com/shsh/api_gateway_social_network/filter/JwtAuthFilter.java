@@ -49,12 +49,12 @@ public class JwtAuthFilter extends AbstractGatewayFilterFactory<JwtAuthFilter.Co
             }
 
             Claims claims = jwtUtil.extractAllClaims(token);
-            String username = claims.getSubject();
-            logger.debug("Token is valid. Username: {}", username);
+            String userId = claims.getSubject(); // Предположим, что userId хранится в subject токена
+            logger.debug("Token is valid. UserId: {}", userId);
 
-            // Модификация запроса
+            // Модификация запроса: добавляем заголовок с user_id
             ServerHttpRequest mutatedRequest = exchange.getRequest().mutate()
-                    .header("username", username)
+                    .header("X-User-Id", userId)
                     .build();
 
             // Создание нового ServerWebExchange с мутированным запросом
