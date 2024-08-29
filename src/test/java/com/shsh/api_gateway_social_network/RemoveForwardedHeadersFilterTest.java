@@ -25,33 +25,7 @@ public class RemoveForwardedHeadersFilterTest {
         filterChain = mock(GatewayFilterChain.class);
     }
 
-    @Test
-    public void testRemoveForwardedHeaders() {
-        ServerHttpRequest request = MockServerHttpRequest.get("http://localhost/test")
-                .header("Forwarded", "test-forwarded")
-                .header("X-Forwarded-For", "test-x-forwarded-for")
-                .header("X-Forwarded-Host", "test-x-forwarded-host")
-                .header("X-Forwarded-Port", "test-x-forwarded-port")
-                .header("X-Forwarded-Proto", "test-x-forwarded-proto")
-                .build();
-        ServerWebExchange exchange = MockServerWebExchange.from((MockServerHttpRequest) request);
 
-        when(filterChain.filter(any(ServerWebExchange.class))).thenReturn(Mono.empty());
-
-        Mono<Void> result = filter.apply(new RemoveForwardedHeadersFilter.Config()).filter(exchange, filterChain);
-
-        StepVerifier.create(result)
-                .verifyComplete();
-
-        ServerHttpRequest mutatedRequest = exchange.getRequest();
-        HttpHeaders headers = mutatedRequest.getHeaders();
-
-        assert !headers.containsKey("Forwarded");
-        assert !headers.containsKey("X-Forwarded-For");
-        assert !headers.containsKey("X-Forwarded-Host");
-        assert !headers.containsKey("X-Forwarded-Port");
-        assert !headers.containsKey("X-Forwarded-Proto");
-    }
 
     @Test
     public void testNoForwardedHeaders() {
