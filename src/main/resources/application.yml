@@ -24,12 +24,19 @@ spring:
             - Path=/ws/**
           filters:
             - name: LoggingFilter
-            - name: JwtAuthFilter
+            - name: JwtAuthWsFilter
 
         - id: chat-service-home
           uri: lb://CHAT-SERVICE
           predicates:
             - Path=/home/**  # Этот предикат обрабатывает запросы на /home
+          filters:
+            - name: LoggingFilter
+            - name: RemoveForwardedHeadersFilter
+        - id: chat-services
+          uri: lb://CHAT-SERVICE
+          predicates:
+            - Path=/chats/**  # Этот предикат обрабатывает запросы на /home
           filters:
             - name: LoggingFilter
             - name: RemoveForwardedHeadersFilter

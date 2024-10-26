@@ -14,13 +14,12 @@ import org.springframework.http.server.reactive.ServerHttpRequest;
 import reactor.core.publisher.Mono;
 
 @Component
-public class JwtAuthFilter extends AbstractGatewayFilterFactory<JwtAuthFilter.Config> {
+public class JwtAuthWsFilter extends AbstractGatewayFilterFactory<JwtAuthWsFilter.Config> {
 
-    private static final Logger logger = LoggerFactory.getLogger(JwtAuthFilter.class);
-
+    private static final Logger logger = LoggerFactory.getLogger(JwtAuthWsFilter.class);
     private final JwtUtil jwtUtil;
 
-    public JwtAuthFilter(JwtUtil jwtUtil) {
+    public JwtAuthWsFilter(JwtUtil jwtUtil) {
         super(Config.class);
         this.jwtUtil = jwtUtil;
     }
@@ -32,31 +31,26 @@ public class JwtAuthFilter extends AbstractGatewayFilterFactory<JwtAuthFilter.Co
     @Override
     public GatewayFilter apply(Config config) {
         return (exchange, chain) -> {
-            String authHeader = exchange.getRequest().getHeaders().getFirst(HttpHeaders.AUTHORIZATION);
-            logger.debug("Authorization Header: {}", authHeader);
+            String token = exchange.getRequest().getQueryParams().getFirst("token");  // Получаем токен из параметра запроса
+            logger.debug("JWT Token from query parameter: {}", token);
 
-            if (authHeader == null || !authHeader.startsWith("Bearer ")) {
-                logger.warn("Invalid Authorization Header");
-                return handleUnauthorized(exchange);
-            }
-
-            String token = authHeader.substring(7);
-            logger.debug("JWT Token: {}", token);
-
-            if (!jwtUtil.validateToken(token)) {
-                logger.warn("Invalid JWT token");
+            if (token == null || !jwtUtil.validateToken(token)) {
+                logger.warn("Invalid or missing JWT token in query parameter");
                 return handleUnauthorized(exchange);
             }
 
             Claims claims = jwtUtil.extractAllClaims(token);
-            String userId = claims.getSubject(); // Предположим, что userId хранится в subject токена
+            String userId = claims.getId();
             logger.debug("Token is valid. UserId: {}", userId);
 
-            // Мутируем запрос для добавления X-User-Id
+            // Мутируем запрос для добавления X-User-Id и Authorization
             ServerHttpRequest mutatedRequest = exchange.getRequest().mutate()
                     .header("X-User-Id", userId)
-                    .header(HttpHeaders.AUTHORIZATION, authHeader)  // Добавляем заголовок Authorization
+                    .header(HttpHeaders.AUTHORIZATION, "Bearer " + token)  // Добавляем заголовок Authorization
                     .build();
+
+            // Выводим все заголовки запроса в лог для проверки
+            mutatedRequest.getHeaders().forEach((key, value) -> logger.info("Header '{}' : {}", key, value));
 
             // Создание нового ServerWebExchange с мутированным запросом
             ServerWebExchange mutatedExchange = exchange.mutate().request(mutatedRequest).build();
@@ -65,9 +59,9 @@ public class JwtAuthFilter extends AbstractGatewayFilterFactory<JwtAuthFilter.Co
         };
     }
 
-
     private Mono<Void> handleUnauthorized(ServerWebExchange exchange) {
         exchange.getResponse().setStatusCode(HttpStatus.UNAUTHORIZED);
         return exchange.getResponse().setComplete();
     }
 }
+
