@@ -13,7 +13,7 @@ spring:
         - id: user-profile-service
           uri: lb://USER-PROFILE-SERVICE
           predicates:
-            - Path=/user/profile/**
+            - Path=/user/profile/**, /ups/**
           filters:
             - name: LoggingFilter
             - name: JwtAuthFilter
@@ -25,21 +25,15 @@ spring:
           filters:
             - name: LoggingFilter
 
-        - id: chat-service-home
+        - id: chat-service
           uri: lb://CHAT-SERVICE
           predicates:
-            - Path=/home/**
-          filters:
-            - name: LoggingFilter
-            - name: RemoveForwardedHeadersFilter
-        - id: chat-services
-          uri: lb://CHAT-SERVICE
-          predicates:
-            - Path=/chats/**
+            - Path=/chats/**, /messages/**, /home/**
           filters:
             - name: LoggingFilter
             - name: RemoveForwardedHeadersFilter
             - name: JwtAuthFilter
+
 
 eureka:
   client:
