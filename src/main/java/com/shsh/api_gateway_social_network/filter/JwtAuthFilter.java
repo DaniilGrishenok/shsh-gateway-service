@@ -49,7 +49,7 @@ public class JwtAuthFilter extends AbstractGatewayFilterFactory<JwtAuthFilter.Co
             }
 
             Claims claims = jwtUtil.extractAllClaims(token);
-            String userId = claims.getSubject(); // Предположим, что userId хранится в subject токена
+            String userId = claims.getSubject();
             logger.debug("Token is valid. UserId: {}", userId);
 
             // Мутируем запрос для добавления X-User-Id

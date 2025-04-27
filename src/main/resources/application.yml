@@ -4,12 +4,18 @@ spring:
 
   cloud:
     gateway:
+      globalcors:
+        corsConfigurations:
+          '[/**]':
+            allowedOriginPatterns: "*"  # позволяет любые Origin вместе с allowCredentials
+            allowedMethods: "*"
+            allowedHeaders: "*"
+            allowCredentials: true
       routes:
         - id: auth-service
           uri: lb://AUTH-SERVICE
           predicates:
-            - Path=/auth/**
-
+            - Path=/auth/**, /as/**
         - id: user-profile-service
           uri: lb://USER-PROFILE-SERVICE
           predicates:
@@ -28,14 +34,30 @@ spring:
         - id: chat-service
           uri: lb://CHAT-SERVICE
           predicates:
-            - Path=/chats/**, /messages/**, /home/**
+            - Path=/chats/**, /messages/**, /home/**, /cs/**
           filters:
             - name: LoggingFilter
             - name: RemoveForwardedHeadersFilter
             - name: JwtAuthFilter
 
-
+        - id: notification-service
+          uri: lb://NOTIFICATION-SERVICE
+          predicates:
+            - Path=/notifications/**
+          filters:
+            - name: LoggingFilter
+            - name: RemoveForwardedHeadersFilter
+            - name: JwtAuthFilter
+        - id: notification-service-no-jwt
+          uri: lb://NOTIFICATION-SERVICE
+          predicates:
+            - Path=/email-confirmation/**, /email/**
+          filters:
+            - name: LoggingFilter
+            - name: RemoveForwardedHeadersFilter
 eureka:
+  instance:
+    hostname: localhost
   client:
     service-url:
       defaultZone: http://localhost:8761/eureka/
